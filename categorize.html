@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Submit Petition</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Submit a Petition</h1>
+        <nav>
+            <a href="/home">Home</a>
+            <a href="/profile">Profile</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <form id="upload-form" enctype="multipart/form-data">
+            <label for="files">Upload Complaint Files (PDF):</label>
+            <input type="file" id="files" name="files" accept=".pdf" multiple required>
+            <button type="submit">Submit</button>
+        </form>
+        <div id="results"></div>
+    </main>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/categorize', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (result.success) {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<h3>Results:</h3>';
+                result.results.forEach(res => {
+                    if (res.error) {
+                        resultsDiv.innerHTML += `<p>Error with ${res.filename}: ${res.error}</p>`;
+                    } else {
+                        resultsDiv.innerHTML += `
+                            <p>File: ${res.filename}</p>
+                            <p>Petition Code: ${res.petition_code}</p>
+                            <p>Category: ${res.category}</p>
+                            <p>Priority: ${res.priority}</p>
+                            <p>Sentiment Score: ${res.sentiment_score.toFixed(2)}</p>
+                            <hr>
+                        `;
+                    }
+                });
+            } else {
+                alert(result.message);
+            }
+        });
+    </script>
+</body>
+</html>
